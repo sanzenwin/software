@@ -1,0 +1,31 @@
+name: Pages
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install deksoftware
+      - run: |
+          deksoftware build https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/} ./.out --limit 67108864 --versions="helm:3.12.3;nerdctl:1.7.1"
+      - name: Upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./.out
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      pages: write
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
